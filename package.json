@@ -1,0 +1,21 @@
+{
+  "name": "my-pa",
+  "version": "1.0.0",
+  "description": "My PA - Modern AI-ready Personal Assistant Progressive Web App",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "personal-assistant",
+    "todo",
+    "calendar-sync",
+    "pwa",
+    "pomodoro",
+    "habits",
+    "offline-first"
+  ],
+  "author": "Krishna Charan",
+  "license": "MIT"
+}

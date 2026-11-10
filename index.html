@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="system">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>My PA - Personal Assistant</title>
+  
+  <!-- PWA Meta Tags -->
+  <meta name="description" content="Your modern AI personal assistant with two-way Google Calendar sync, smart NLP quick-add, habit tracker, and Pomodoro focus timer.">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="My PA">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icons/icon-192.svg">
+  <link rel="apple-touch-icon" href="icons/icon-192.svg">
+
+  <!-- Application Stylesheet -->
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <!-- PWA Installation Banner (appears when browser supports install) -->
+  <div id="pwa-install-banner" class="pwa-banner hidden">
+    <div>
+      <strong>Install My PA App</strong> — Get instant offline access, push reminders, and quick add on your device!
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <button id="pwa-install-btn" class="btn btn-sm btn-outline" style="color: white; border-color: white;">Install</button>
+      <button class="btn btn-sm btn-ghost" style="color: white;" onclick="document.getElementById('pwa-install-banner').classList.add('hidden')">&times;</button>
+    </div>
+  </div>
+
+  <div class="app-container">
+    <!-- Desktop Sidebar Navigation -->
+    <aside class="app-sidebar">
+      <div class="sidebar-header">
+        <div class="brand-icon-wrapper">
+          <img src="icons/icon-192.svg" alt="My PA Logo">
+        </div>
+        <div class="brand-text">
+          <h1>My PA</h1>
+          <span class="brand-badge">Personal Assistant</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button type="button" class="nav-link active" data-tab="dashboard">
+          <span class="nav-icon">📊</span>
+          <span>Home Dashboard</span>
+        </button>
+        <button type="button" class="nav-link" data-tab="tasks">
+          <span class="nav-icon">✅</span>
+          <span>To-Do &amp; Tasks</span>
+        </button>
+        <button type="button" class="nav-link" data-tab="habits">
+          <span class="nav-icon">🔥</span>
+          <span>Habit Tracker</span>
+        </button>
+        <button type="button" class="nav-link" data-tab="focus">
+          <span class="nav-icon">⏱️</span>
+          <span>Focus Timer</span>
+        </button>
+        <button type="button" class="nav-link" data-tab="calendar">
+          <span class="nav-icon">📅</span>
+          <span>Google Calendar</span>
+        </button>
+        <button type="button" class="nav-link" data-tab="notes">
+          <span class="nav-icon">📒</span>
+          <span>Notes &amp; Ideas</span>
+        </button>
+        <button type="button" class="nav-link" data-tab="reports">
+          <span class="nav-icon">📈</span>
+          <span>Weekly Report</span>
+        </button>
+        <button type="button" class="nav-link" data-tab="settings">
+          <span class="nav-icon">⚙️</span>
+          <span>Settings</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile-badge">
+          <img id="user-avatar-img" class="user-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" alt="Avatar">
+          <div class="user-info-text">
+            <span id="user-display-name" class="user-name">Krishna Charan</span>
+            <span class="user-role">Google Account Connected</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="app-main">
+      <!-- Top Header -->
+      <header class="app-header">
+        <div class="header-left">
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="global-search-input" class="search-input" placeholder="Search tasks, notes, or tags...">
+          </div>
+        </div>
+
+        <div class="header-right">
+          <!-- Calendar 2-Way Sync Status & Button -->
+          <div id="sync-status-badge" class="status-badge" title="Two-way Google Calendar synchronization active">
+            <span class="status-dot online"></span>
+            <span>Google Calendar Synced</span>
+          </div>
+          <button id="sync-calendar-btn" class="btn btn-sm btn-outline" title="Trigger two-way calendar sync now">
+            🔄 <span class="hide-mobile">Sync Now</span>
+          </button>
+
+          <!-- Dark Mode Toggle Button -->
+          <button id="theme-toggle-btn" class="btn-icon" title="Toggle Light / Dark Mode">
+            🌙
+          </button>
+
+          <!-- New Task Button -->
+          <button class="btn btn-primary btn-sm" onclick="window.app.openAddTaskModal()">
+            + <span class="hide-mobile">New Task</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Quick Add Bar with NLP & Voice Input -->
+      <section class="quick-add-section">
+        <div class="quick-add-card">
+          <form id="quick-add-form" class="quick-add-form">
+            <div class="quick-add-input-wrapper">
+              <input
+                type="text"
+                id="quick-add-input"
+                class="quick-add-input"
+                placeholder='Quick Add: "call mom tomorrow at 5 pm" or "budget review friday at 10am #work !high"'
+                autocomplete="off"
+              />
+            </div>
+            <!-- Speech-to-Text Voice Input Button -->
+            <button type="button" id="quick-add-voice-btn" class="voice-btn" title="Speak to add task (Voice Input)">
+              🎙️
+            </button>
+            <button type="submit" class="btn btn-primary">
+              Add Task
+            </button>
+          </form>
+          <!-- Dynamic NLP Live Preview Badges -->
+          <div id="quick-add-preview" class="quick-add-preview hidden"></div>
+        </div>
+      </section>
+
+      <!-- Overdue Tasks Banner with Smart Rescheduling Suggestions -->
+      <section id="overdue-tasks-section" class="overdue-banner hidden">
+        <div class="overdue-banner-header">
+          <h3>⚠️ Overdue Tasks Detected</h3>
+          <span class="text-xs text-muted">Smart rescheduling suggestions available</span>
+        </div>
+        <div id="overdue-tasks-list" class="overdue-tasks-list"></div>
+      </section>
+
+      <!-- VIEW 1: HOME DASHBOARD -->
+      <div id="view-dashboard" class="app-view">
+        <div class="dashboard-grid">
+          <!-- Column 1: Today's Schedule (Google Calendar + Time-blocked Tasks) -->
+          <div class="dashboard-col">
+            <div class="dashboard-panel">
+              <div class="panel-header">
+                <h3 class="panel-title">📅 Today's Schedule</h3>
+                <span class="text-xs text-muted">Synced with Google Calendar</span>
+              </div>
+              <div id="dashboard-schedule-container" class="timeline-container"></div>
+            </div>
+          </div>
+
+          <!-- Column 2: Today's To-Do List -->
+          <div class="dashboard-col">
+            <div class="dashboard-panel">
+              <div class="panel-header">
+                <h3 class="panel-title">✅ Today's To-Do List</h3>
+                <button class="btn btn-xs btn-outline-primary" onclick="window.app.openAddTaskModal()">+ Add Task</button>
+              </div>
+              <div id="dashboard-todo-container" class="tasks-list"></div>
+            </div>
+          </div>
+
+          <!-- Column 3: Upcoming Deadlines & Quick Metrics -->
+          <div class="dashboard-col">
+            <!-- Quick Stat Banner -->
+            <div class="dashboard-panel">
+              <div class="panel-header">
+                <h3 class="panel-title">⚡ Today's Momentum</h3>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="stat-card" style="padding: 12px;">
+                  <div class="stat-content">
+                    <span class="stat-label">Done Today</span>
+                    <span id="dash-stat-completed" class="stat-value text-emerald">0</span>
+                  </div>
+                </div>
+                <div class="stat-card" style="padding: 12px;">
+                  <div class="stat-content">
+                    <span class="stat-label">Pending</span>
+                    <span id="dash-stat-pending" class="stat-value text-indigo">0</span>
+                  </div>
+                </div>
+              </div>
+              <div style="margin-top: 10px; padding: 10px; background: var(--bg-surface-soft); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-size: 0.85rem; font-weight: 600;">Active Habit Streak</span>
+                <span id="dash-stat-streak" style="font-weight: 700; color: var(--accent-amber);">🔥 0d</span>
+              </div>
+            </div>
+
+            <!-- Upcoming Deadlines -->
+            <div class="dashboard-panel">
+              <div class="panel-header">
+                <h3 class="panel-title">⏰ Upcoming Deadlines</h3>
+              </div>
+              <div id="dashboard-deadlines-container"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 2: TO-DO & TASKS -->
+      <div id="view-tasks" class="app-view hidden">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h2>To-Do &amp; Tasks Management</h2>
+            <p class="text-sm text-muted">Filter, schedule, repeat, and manage all your tasks.</p>
+          </div>
+          <button class="btn btn-primary" onclick="window.app.openAddTaskModal()">+ Create Task</button>
+        </div>
+
+        <!-- Task Filters -->
+        <div style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
+          <select class="form-select" style="width: auto;" onchange="window.app.state.filterStatus = this.value; window.app.renderTasksPage();">
+            <option value="all">Status: All</option>
+            <option value="pending">Pending Only</option>
+            <option value="completed">Completed Only</option>
+            <option value="overdue">Overdue Only</option>
+          </select>
+          <select class="form-select" style="width: auto;" onchange="window.app.state.filterPriority = this.value; window.app.renderTasksPage();">
+            <option value="all">Priority: All</option>
+            <option value="urgent">Urgent</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+          <select class="form-select" style="width: auto;" onchange="window.app.state.filterCategory = this.value; window.app.renderTasksPage();">
+            <option value="all">Category: All</option>
+            <option value="work">Work</option>
+            <option value="personal">Personal</option>
+            <option value="health">Health</option>
+            <option value="study">Study</option>
+            <option value="finance">Finance</option>
+          </select>
+        </div>
+
+        <div id="tasks-page-list" class="tasks-list"></div>
+      </div>
+
+      <!-- VIEW 3: HABIT TRACKER -->
+      <div id="view-habits" class="app-view hidden">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+          <div>
+            <h2>Daily Habit Tracker</h2>
+            <p class="text-sm text-muted">Maintain streaks, build consistency, and celebrate milestones.</p>
+          </div>
+          <button class="btn btn-primary" onclick="window.app.openAddHabitModal()">+ Add Habit</button>
+        </div>
+        <div id="habits-list-container" class="dashboard-panel"></div>
+      </div>
+
+      <!-- VIEW 4: POMODORO FOCUS TIMER -->
+      <div id="view-focus" class="app-view hidden">
+        <div class="pomodoro-box">
+          <!-- Modes -->
+          <div class="pomodoro-mode-tabs">
+            <button class="pomodoro-mode-tab active" data-mode="work" onclick="window.pomodoro.setMode('work')">Work (25m)</button>
+            <button class="pomodoro-mode-tab" data-mode="shortBreak" onclick="window.pomodoro.setMode('shortBreak')">Short Break (5m)</button>
+            <button class="pomodoro-mode-tab" data-mode="longBreak" onclick="window.pomodoro.setMode('longBreak')">Long Break (15m)</button>
+          </div>
+
+          <!-- Circular Ring & Timer -->
+          <div class="pomodoro-clock-ring">
+            <svg viewBox="0 0 260 260">
+              <circle cx="130" cy="130" r="120" class="pomodoro-ring-bg"></circle>
+              <circle id="pomodoro-progress-ring" cx="130" cy="130" r="120" class="pomodoro-ring-progress"></circle>
+            </svg>
+            <div class="pomodoro-time-center">
+              <div id="pomodoro-time-display" class="pomodoro-time-display">25:00</div>
+              <div id="pomodoro-linked-task" class="pomodoro-linked-task">🎯 General Focus Session</div>
+            </div>
+          </div>
+
+          <!-- Play/Pause/Reset Controls -->
+          <div class="pomodoro-controls">
+            <button id="pomodoro-start-btn" class="btn btn-lg btn-primary" onclick="window.pomodoro.toggle()">
+              <span>▶️</span> Start Focus
+            </button>
+            <button class="btn btn-outline" title="Skip to Next Mode" onclick="window.pomodoro.skip()">
+              ⏭️ Skip
+            </button>
+            <button class="btn btn-ghost" title="Reset Timer" onclick="window.pomodoro.reset()">
+              🔄 Reset
+            </button>
+          </div>
+
+          <!-- Link to Task -->
+          <div class="form-group" style="margin-bottom: 20px; text-align: left;">
+            <label class="form-label">Link focus session to task:</label>
+            <select id="pomodoro-task-selector" class="form-select"></select>
+          </div>
+
+          <!-- Ambient Sound Generator -->
+          <div class="ambient-sound-picker">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="font-size: 0.85rem; font-weight: 600;">🎧 Background Ambient Sound:</span>
+              <select class="form-select" style="width: auto; padding: 4px 8px; font-size: 0.8rem;" onchange="window.pomodoro.setAmbient(this.value)">
+                <option value="none">Off (Silent)</option>
+                <option value="rain">Gentle Rain</option>
+                <option value="forest">Forest Stream</option>
+                <option value="white_noise">White Noise</option>
+                <option value="tick">Subtle Clock Tick</option>
+              </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 0.75rem; color: var(--text-muted);">Volume:</span>
+              <input type="range" min="0.05" max="1" step="0.05" value="0.3" style="flex: 1;" oninput="window.pomodoro.setAmbientVolume(this.value)">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 5: GOOGLE CALENDAR -->
+      <div id="view-calendar" class="app-view hidden">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h2>Google Calendar Two-Way Sync</h2>
+            <p class="text-sm text-muted">All appointments sync seamlessly. Tasks created in My PA appear as events on your calendar.</p>
+          </div>
+          <button class="btn btn-primary" onclick="window.app.syncCalendarNow()">
+            🔄 Force Sync with Google Calendar
+          </button>
+        </div>
+        <div id="calendar-events-container"></div>
+      </div>
+
+      <!-- VIEW 6: NOTES & IDEAS -->
+      <div id="view-notes" class="app-view hidden">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+          <div>
+            <h2>Notes &amp; Ideas</h2>
+            <p class="text-sm text-muted">Markdown-friendly notes, meeting logs, and quick thoughts.</p>
+          </div>
+          <button class="btn btn-primary" onclick="window.app.openAddNoteModal()">+ Create Note</button>
+        </div>
+        <div id="notes-grid-container" class="notes-grid"></div>
+      </div>
+
+      <!-- VIEW 7: WEEKLY REPORT -->
+      <div id="view-reports" class="app-view hidden">
+        <div style="margin-bottom: 20px;">
+          <h2>Weekly Productivity Report</h2>
+          <p class="text-sm text-muted">Visual analytics of tasks completed, focus time logged, and habit consistency.</p>
+        </div>
+        <div id="weekly-report-container"></div>
+      </div>
+
+      <!-- VIEW 8: SETTINGS -->
+      <div id="view-settings" class="app-view hidden">
+        <div style="margin-bottom: 20px;">
+          <h2>Assistant Settings &amp; Preferences</h2>
+          <p class="text-sm text-muted">Configure notification delivery times, alert sounds, time zone, and calendar credentials.</p>
+        </div>
+
+        <!-- Notification Schedules -->
+        <div class="settings-section-card">
+          <h3>🔔 Scheduled Notifications &amp; Daily Digests</h3>
+          <div class="settings-group">
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">Daily Morning Summary</div>
+                <div class="setting-help">Send daily briefing with today's tasks and calendar events</div>
+              </div>
+              <input type="time" id="setting-morning-time" class="form-input" style="width: 140px;">
+            </div>
+
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">Evening Review Reminder</div>
+                <div class="setting-help">Notify regarding unfinished tasks and prompt rescheduling</div>
+              </div>
+              <input type="time" id="setting-evening-time" class="form-input" style="width: 140px;">
+            </div>
+
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">Pre-Task Reminder Offset</div>
+                <div class="setting-help">When to send alert before upcoming task or event</div>
+              </div>
+              <select id="setting-reminder-offset" class="form-select" style="width: 160px;">
+                <option value="5">5 minutes before</option>
+                <option value="10">10 minutes before</option>
+                <option value="15">15 minutes before</option>
+                <option value="30">30 minutes before</option>
+                <option value="60">1 hour before</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap;">
+            <button class="btn btn-sm btn-outline-primary" onclick="window.notificationManager.triggerMorningDigest()">
+              🌅 Preview Morning Digest
+            </button>
+            <button class="btn btn-sm btn-outline" onclick="window.notificationManager.triggerEveningReview()">
+              🌙 Preview Evening Review
+            </button>
+            <button class="btn btn-sm btn-outline" onclick="window.app.showEmailPreview('morning')">
+              📧 Preview Morning Email Template
+            </button>
+          </div>
+        </div>
+
+        <!-- Sounds & Themes -->
+        <div class="settings-section-card">
+          <h3>🎵 Audio Alerts &amp; Theme Appearance</h3>
+          <div class="settings-group">
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">Alert Sound Theme</div>
+                <div class="setting-help">Web Audio synthesized tones for push notifications and timers</div>
+              </div>
+              <div style="display: flex; gap: 6px;">
+                <select id="setting-sound-theme" class="form-select" style="width: 160px;">
+                  <option value="chime">Gentle Chime</option>
+                  <option value="bell">Modern Bell</option>
+                  <option value="marimba">Upbeat Marimba</option>
+                  <option value="ping">Crisp Digital Ping</option>
+                  <option value="zen">Zen Singing Bowl</option>
+                </select>
+                <button class="btn btn-outline btn-sm" onclick="window.app.testSelectedSound()">▶ Test</button>
+              </div>
+            </div>
+
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">Theme Mode</div>
+                <div class="setting-help">Select light, dark, or follow device system setting</div>
+              </div>
+              <select id="setting-color-theme" class="form-select" style="width: 160px;" onchange="window.app.applyTheme(this.value)">
+                <option value="system">System Default</option>
+                <option value="dark">Dark Mode</option>
+                <option value="light">Light Mode</option>
+              </select>
+            </div>
+
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">Notification Email Address</div>
+                <div class="setting-help">Destination address for summary digests and urgent alerts</div>
+              </div>
+              <input type="email" id="setting-email" class="form-input" style="width: 240px;" placeholder="user@gmail.com">
+            </div>
+          </div>
+        </div>
+
+        <!-- Google Calendar Integration -->
+        <div class="settings-section-card">
+          <h3>📅 Google Account &amp; Calendar API</h3>
+          <div class="settings-group">
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">Two-Way Calendar Sync</div>
+                <div class="setting-help">Sync tasks created in My PA directly to your Google Calendar</div>
+              </div>
+              <span class="status-badge" style="color: var(--accent-emerald);">Active &amp; Connected</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Google OAuth Client ID (Optional for custom domain deployment):</label>
+              <input type="text" id="setting-gclient-id" class="form-input" placeholder="e.g. 123456789-xxxx.apps.googleusercontent.com">
+            </div>
+          </div>
+        </div>
+
+        <!-- Backup & Save -->
+        <div class="settings-section-card">
+          <h3>💾 Data Management &amp; Persistence</h3>
+          <p class="text-sm text-muted" style="margin-bottom: 14px;">All tasks, habits, and notes are securely persisted in local SQLite database (`database.sqlite`) and cached for offline PWA operation.</p>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="window.app.saveSettings()">Save Preferences</button>
+            <button class="btn btn-outline" onclick="window.app.exportDataBackup()">Export JSON Backup</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Mobile Bottom Navigation Dock -->
+  <nav class="mobile-nav-bar">
+    <button class="mobile-nav-item active" data-tab="dashboard">
+      <span class="mobile-nav-icon">📊</span>
+      <span>Home</span>
+    </button>
+    <button class="mobile-nav-item" data-tab="tasks">
+      <span class="mobile-nav-icon">✅</span>
+      <span>Tasks</span>
+    </button>
+    <button class="mobile-nav-item" data-tab="habits">
+      <span class="mobile-nav-icon">🔥</span>
+      <span>Habits</span>
+    </button>
+    <button class="mobile-nav-item" data-tab="focus">
+      <span class="mobile-nav-icon">⏱️</span>
+      <span>Focus</span>
+    </button>
+    <button class="mobile-nav-item" data-tab="notes">
+      <span class="mobile-nav-icon">📒</span>
+      <span>Notes</span>
+    </button>
+  </nav>
+
+  <!-- MODAL: ADD / EDIT TASK -->
+  <div id="task-modal" class="modal-backdrop hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="task-modal-title">Create New Task</h3>
+        <button class="btn-icon" onclick="window.app.closeTaskModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Task Title *</label>
+          <input type="text" id="task-form-title" class="form-input" placeholder="e.g. Prepare presentation slides" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Due Date</label>
+            <input type="date" id="task-form-due-date" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Due Time</label>
+            <input type="time" id="task-form-due-time" class="form-input">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Priority</label>
+            <select id="task-form-priority" class="form-select">
+              <option value="urgent">Urgent</option>
+              <option value="high">High</option>
+              <option value="medium" selected>Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <select id="task-form-category" class="form-select">
+              <option value="Work" selected>Work</option>
+              <option value="Personal">Personal</option>
+              <option value="Health">Health</option>
+              <option value="Study">Study</option>
+              <option value="Finance">Finance</option>
+              <option value="Errands">Errands</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Repeat</label>
+          <select id="task-form-repeat" class="form-select">
+            <option value="none">Does not repeat</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Subtasks / Checklist</label>
+          <div class="subtasks-adder-row">
+            <input type="text" id="new-subtask-input" class="form-input" placeholder="Add a subtask step...">
+            <button type="button" id="add-subtask-btn" class="btn btn-outline btn-sm">+ Add</button>
+          </div>
+          <div id="modal-subtasks-list"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Notes &amp; Description</label>
+          <textarea id="task-form-notes" class="form-textarea" rows="3" placeholder="Add context, links, or instructions..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="window.app.closeTaskModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="window.app.saveTaskModal()">Save Task</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD HABIT -->
+  <div id="habit-modal" class="modal-backdrop hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Create New Habit</h3>
+        <button class="btn-icon" onclick="window.app.closeHabitModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Habit Name *</label>
+          <input type="text" id="habit-form-title" class="form-input" placeholder="e.g. Read 20 pages daily" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <select id="habit-form-category" class="form-select">
+              <option value="Health">Health</option>
+              <option value="Learning">Learning</option>
+              <option value="Mindfulness">Mindfulness</option>
+              <option value="Productivity">Productivity</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Icon</label>
+            <select id="habit-form-icon" class="form-select">
+              <option value="target">🎯 Target</option>
+              <option value="droplet">💧 Water</option>
+              <option value="book-open">📖 Reading</option>
+              <option value="dumbbell">💪 Workout</option>
+              <option value="sun">☀️ Morning</option>
+              <option value="moon">🌙 Sleep</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="window.app.closeHabitModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="window.app.saveHabitModal()">Save Habit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD / EDIT NOTE -->
+  <div id="note-modal" class="modal-backdrop hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="note-modal-title">Create Note</h3>
+        <button class="btn-icon" onclick="window.app.closeNoteModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Note Title *</label>
+          <input type="text" id="note-form-title" class="form-input" placeholder="e.g. Project Architecture Thoughts" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Accent Color</label>
+            <select id="note-form-color" class="form-select">
+              <option value="blue">Blue</option>
+              <option value="purple">Purple</option>
+              <option value="emerald">Emerald</option>
+              <option value="amber">Amber</option>
+              <option value="rose">Rose</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tags (comma separated)</label>
+            <input type="text" id="note-form-tags" class="form-input" placeholder="e.g. Strategy, Ideas">
+          </div>
+        </div>
+        <div class="form-group">
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+            <input type="checkbox" id="note-form-pinned">
+            <span>📌 Pin this note to top</span>
+          </label>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Content (Markdown supported)</label>
+          <textarea id="note-form-content" class="form-textarea" rows="6" placeholder="Write thoughts, lists, or markdown..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="window.app.closeNoteModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="window.app.saveNoteModal()">Save Note</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: EMAIL NOTIFICATION PREVIEW -->
+  <div id="email-preview-modal" class="modal-backdrop hidden">
+    <div class="modal-content" style="max-width: 620px;">
+      <div class="modal-header">
+        <h3>📧 Email Notification Preview</h3>
+        <button class="btn-icon" onclick="window.app.closeEmailPreview()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="email-preview-content"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="window.app.closeEmailPreview()">Close Preview</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- Application Scripts -->
+  <script src="js/sound.js"></script>
+  <script src="js/speech.js"></script>
+  <script src="js/nlp.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/calendar.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/habits.js"></script>
+  <script src="js/pomodoro.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

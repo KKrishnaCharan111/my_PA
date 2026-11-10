@@ -1,0 +1,6 @@
+# Logs and runtime databases
+node_modules/
+database.sqlite-wal
+database.sqlite-shm
+.DS_Store
+Thumbs.db

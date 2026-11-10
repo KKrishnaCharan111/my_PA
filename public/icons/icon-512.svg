@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="50%" stop-color="#4f46e5" />
+      <stop offset="100%" stop-color="#3b82f6" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <!-- Background Rounded Rect -->
+  <rect width="512" height="512" rx="128" fill="url(#grad)" />
+  <!-- Assistant Icon: Stylized Lightning/Star + Checkmark + Shield -->
+  <g filter="url(#shadow)" fill="none" stroke="#ffffff" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Center PA Monogram / Intelligent Checkmark & Calendar Element -->
+    <path d="M160 260 L224 324 L360 188" stroke-width="38" />
+    <!-- Pulse Ring / AI Sparkle -->
+    <circle cx="390" cy="140" r="16" fill="#fbbf24" stroke="none" />
+    <path d="M390 110 L390 170 M360 140 L420 140" stroke="#fbbf24" stroke-width="8" />
+    <!-- Clock Indicator Ring Arc -->
+    <path d="M120 256 A 136 136 0 1 0 256 120" stroke="rgba(255,255,255,0.4)" stroke-dasharray="16 12" stroke-width="14" />
+  </g>
+</svg>
